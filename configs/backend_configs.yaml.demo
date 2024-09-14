@@ -1,0 +1,11 @@
+WEB:
+  port: 6160
+
+LLM:
+  llm_params:
+    platform: Zhipu
+    model_name: chatglm_turbo
+    api_key: 9e9d13e921871472a449274bad42cb42.uGbjrWiZQOaVilYy
+
+Feishu:
+  app_token: IUCtbwF1qaRtassurNKcHq0Gnvh

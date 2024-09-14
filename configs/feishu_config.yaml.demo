@@ -1,0 +1,7 @@
+app_id: cli_a6c00486943fd00b
+app_secret: 5jXKtTnEg06nKjyVXoyRscVUsebh6xAg
+chromedriver_executable: W:\Personal_Project\metaunitech\shellProbe_manager\src\chromedriver.exe
+chromedriver_version: 119
+feishu_token_endpoint: https://open.feishu.cn/api-explorer
+cookie_path: __cookies__
+account: metaunitech
