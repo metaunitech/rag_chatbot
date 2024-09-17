@@ -45,36 +45,51 @@ class FeishuRAGBot(FeishuMessageHandler):
                 content_str = message.get('content')
                 content = json.loads(content_str) if content_str else {}
                 file_key = content.get('file_key')
-                file_path = self.retrieve_file(message_id, file_key, Path(__file__).parent.parent/'src'/'inputs')
-                self.rag_chatbot_ins.load_inputs()
-                # SEND LOADED.
-                current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                rich_text_log = (
-                    f'<b>【已下载知识文档】</b>\n'
-                    f'<i>{file_path.name}</i>\n'
-                    f'<b>【时间】</b>: {current_time}\n'
-                    '<b>【状态】</b>: 已录入知识库'
-                    '<font color="green"><b>【提示】</b>: 可以开始问问题了</font>'
-                )
-                self.send_message_by_template(receive_id=sender_id,
-                                              template_id='AAq7OhvOhSJB2', # Hardcoded.
-                                              template_variable={'log_rich_text': rich_text_log})
-                msgs.append(rich_text_log)
+                file_path = self.retrieve_file(message_id, file_key, Path(__file__).parent.parent / 'src' / 'inputs')
+                if file_path is False:
+                    current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    rich_text_log = (
+                        f'<b>【已下载知识文档】</b>\n'
+                        f'<i>{file_path.name}</i>\n'
+                        f'<b>【时间】</b>: {current_time}\n'
+                        '<b>【状态】</b>: 知识库中已存在。\n'
+                        '<b><font color="green"><b>【提示】</b>: 可以开始问问题了</font>'
+                    )
+                    self.send_message_by_template(receive_id=sender_id,
+                                                  template_id='AAq7OhvOhSJB2',  # Hardcoded.
+                                                  template_variable={'log_rich_text': rich_text_log})
+                    msgs.append(rich_text_log)
+
+                elif file_path.exists():
+                    self.rag_chatbot_ins.load_inputs()
+                    # SEND LOADED.
+                    current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    rich_text_log = (
+                        f'<b>【已下载知识文档】</b>\n'
+                        f'<i>{file_path.name}</i>\n'
+                        f'<b>【时间】</b>: {current_time}\n'
+                        '<b>【状态】</b>: 已录入知识库\n'
+                        '<b><font color="green"><b>【提示】</b>: 可以开始问问题了</font>'
+                    )
+                    self.send_message_by_template(receive_id=sender_id,
+                                                  template_id='AAq7OhvOhSJB2',  # Hardcoded.
+                                                  template_variable={'log_rich_text': rich_text_log})
+                    msgs.append(rich_text_log)
+                else:
+                    current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    rich_text_log = (
+                        f'<b>【已下载知识文档】</b>\n'
+                        f'<i>{file_path.name}</i>\n'
+                        f'<b>【时间】</b>: {current_time}\n'
+                        '<b>【状态】</b>: 没有收到合适的文件\n'
+                        '<b><font color="red"><b>【提示】</b>: 文件录入失败，但依旧可以提问</font>'
+                    )
+                    self.send_message_by_template(receive_id=sender_id,
+                                                  template_id='AAq7OhvOhSJB2',  # Hardcoded.
+                                                  template_variable={'log_rich_text': rich_text_log})
+                    msgs.append(rich_text_log)
         return msgs
 
-if __name__ == "__main__":
-    demo = [{'schema': '2.0',
-             'header': {'event_id': 'e0072e8cccf47802c01784ba854506fa', 'token': '0RA4IXx4vLtaJi4betQ4AfF6ToL8Rttb',
-                        'create_time': '1726483524479', 'event_type': 'im.message.receive_v1',
-                        'tenant_key': '16c5228b4a88575e', 'app_id': 'cli_a6681e9c2eb4d00d'},
-             'event': {
-            'message': {'chat_id': 'oc_7c1443de640303e5e9f47d02eb57ac1c', 'chat_type': 'p2p',
-                        'content': '{"text":";;\\\\"}', 'create_time': '1726483524097',
-                        'message_id': 'om_93751cf1efe431de5f644f5b6c3c3113', 'message_type': 'text',
-                        'update_time': '1726483524097'}, 'sender': {
-                'sender_id': {'open_id': 'ou_2401613ed164502ea6a20417c20dffee',
-                              'union_id': 'on_c9326f5070c64b47c4f143961ccc1960', 'user_id': '5246a146'},
-                'sender_type': 'user', 'tenant_key': '16c5228b4a88575e'}}}]
 
-    ins = FeishuRAGBot(r'W:\Personal_Project\NeiRelated\projects\rag_chatbot\configs\feishu_config.yaml')
-    ins.process_msg_dict(demo)
+if __name__ == "__main__":
+    pass

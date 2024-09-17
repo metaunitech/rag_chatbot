@@ -210,7 +210,7 @@ YOUR ANSWER(请返回中文结果。注意，请严格依据DocContent提供的�
         reason = answer_instance.reason
         return answer, reason
 
-    def qa_main(self, question, k=4):
+    def qa_main(self, question, k=10):
         results = self.query_document(question, k)
         files = [f"{Path(r.metadata['file_path']).name}: Segment_index: {r.metadata['segment_idx']}" for r in results]
         contents = list(set(r.page_content for r in results))
