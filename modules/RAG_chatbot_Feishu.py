@@ -50,7 +50,7 @@ class FeishuRAGBot(FeishuMessageHandler):
                     current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     rich_text_log = (
                         f'<b>【已下载知识文档】</b>\n'
-                        f'<i>{file_path.name}</i>\n'
+                        f'<i>{file_key}</i>\n'
                         f'<b>【时间】</b>: {current_time}\n'
                         '<b>【状态】</b>: 知识库中已存在。\n'
                         '<b><font color="green"><b>【提示】</b>: 可以开始问问题了</font>'
@@ -78,8 +78,8 @@ class FeishuRAGBot(FeishuMessageHandler):
                 else:
                     current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     rich_text_log = (
-                        f'<b>【已下载知识文档】</b>\n'
-                        f'<i>{file_path.name}</i>\n'
+                        f'<b>【知识文档下载失败】</b>\n'
+                        f'<i>{file_key}</i>\n'
                         f'<b>【时间】</b>: {current_time}\n'
                         '<b>【状态】</b>: 没有收到合适的文件\n'
                         '<b><font color="red"><b>【提示】</b>: 文件录入失败，但依旧可以提问</font>'
