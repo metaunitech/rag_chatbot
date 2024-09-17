@@ -45,7 +45,7 @@ class FeishuRAGBot(FeishuMessageHandler):
                 content_str = message.get('content')
                 content = json.loads(content_str) if content_str else {}
                 file_key = content.get('file_key')
-                file_path = self.retrieve_file(message_id, file_key, Path(__file__).parent.parent/'src'/'input')
+                file_path = self.retrieve_file(message_id, file_key, Path(__file__).parent.parent/'src'/'inputs')
                 self.rag_chatbot_ins.load_inputs()
                 # SEND LOADED.
                 current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
