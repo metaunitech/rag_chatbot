@@ -8,6 +8,8 @@ import chardet
 import re
 from PIL import Image
 import os, io
+import docx
+from langchain_community.document_loaders import UnstructuredWordDocumentLoader
 
 """
 File type transformation
@@ -195,3 +197,48 @@ def convert_pdf2img(input_file_path: Path, storage_path=None):
             print(f"第{page_num}保存图片完成")
             page_num += 1
     return img_outs
+
+
+"""
+DOCX handler
+"""
+
+
+def extract_plaintext_from_docx(input_file_path: Path):
+    loader = UnstructuredWordDocumentLoader(str(input_file_path), mode="elements")
+    documents = loader.load()
+
+    out_texts = []
+
+    current_block_text = []
+    for ele_doc in documents:
+        element_category_depth = ele_doc.metadata.get('category_depth', 0)
+        page_text = ele_doc.metadata['text_as_html'] if ele_doc.metadata.get('text_as_html') else ele_doc.page_content
+        element_category = ele_doc.metadata.get('category')
+        if element_category == 'Header':
+            page_text = '[Header]   ' + page_text
+        elif element_category == 'PageBreak':
+            continue
+        if element_category_depth == 0:
+            if current_block_text:
+                out_texts.append('\n'.join(current_block_text))
+                current_block_text = []
+            current_block_text.append(" " * element_category_depth + page_text)
+            continue
+        else:
+            current_block_text.append(' ' * element_category_depth + page_text)
+    if current_block_text:
+        out_texts.append('\n'.join(current_block_text))
+    return out_texts
+
+
+def extract_structured_content_from_docx(input_file_path: Path, ocr_engine=None):
+    pass
+
+
+# 使用函数
+
+if __name__ == "__main__":
+    input_file = r'W:\Personal_Project\NeiRelated\projects\rag_chatbot\input_demo.docx'  # 输入 .docx 文件路径
+    content = extract_plaintext_from_docx(Path(input_file))
+    print(content)

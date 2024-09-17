@@ -18,3 +18,5 @@ requests_toolbelt
 undetected_chromedriver
 selenium
 flask
+zhipuai
+unstructured

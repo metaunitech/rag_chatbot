@@ -3,7 +3,8 @@ from pathlib import Path
 from loguru import logger
 from modules.utils.file_utils import convert_pdf2img, is_scanned_pdf
 from modules.utils.file_utils import transform_et2xlsx, transform_csv2xlsx, transform_xls2xlsx
-from modules.utils.file_utils import extract_plaintext_from_xlsx, extract_plaintext_from_pdf
+from modules.utils.file_utils import extract_plaintext_from_xlsx, extract_plaintext_from_pdf, \
+    extract_plaintext_from_docx
 from modules.utils.ocr_handler import OCRHandler
 from modules.utils.general_utils import method_descriptor, get_description
 import fitz
@@ -44,7 +45,7 @@ class TextExtraction:
         page_nums = page_nums if page_nums else list(pic_result.keys())
         for page_num in page_nums:
             page_pic_path = pic_result[page_num]
-            res = self.ocr_engine.get_ocr_result_by_row(page_pic_path, do_not_format=True, crop_method=3)
+            res = self.ocr_engine.get_ocr_result_by_row(page_pic_path, do_not_format=True, crop_method=0)
             logger.debug(res)
             out_texts.append(res)
         return out_texts
@@ -64,7 +65,7 @@ class TextExtraction:
         page_nums = page_nums if page_nums else list(pic_result.keys())
         for page_num in page_nums:
             page_pic_path = pic_result[page_num]
-            res = self.ocr_engine.get_ocr_result_by_row(page_pic_path, do_not_format=True, crop_method=3)
+            res = self.ocr_engine.get_ocr_result_by_row(page_pic_path, do_not_format=True, crop_method=0)
             logger.debug(res)
             out_texts.append(res)
         return out_texts
@@ -116,6 +117,18 @@ class TextExtraction:
             out_texts.extend(res)
         return out_texts
 
+    @method_descriptor({'raw_file_type': 'DOCX',
+                        'extraction_method': 'docx+ocr',
+                        'extraction_result_description': '通过docx-python包，会将docx的段落变成md格式的层级结构。内容包含标题、段落、表格。如果遇到图像会进行OCR。'})
+    def extract_docx_with_structure(self, input_file_path: Path, **kwargs):
+        """
+        Use docx + ocr to extract docx to md format
+        :param input_file_path:
+        :return:
+        """
+        out_texts = extract_plaintext_from_docx(input_file_path)
+        return out_texts
+
     @staticmethod
     def transform_2_xlsx(file_path: Path):
         """
@@ -145,6 +158,9 @@ class TextExtraction:
 
         if input_file_path.suffix in ['.csv', '.xlsx', '.xls', '.et']:
             return self.extract_excel
+
+        if input_file_path.suffix in ['.docx']:
+            return self.extract_docx_with_structure
 
         if input_file_path.suffix == '.pdf':
             is_scanned = is_scanned_pdf(str(input_file_path))

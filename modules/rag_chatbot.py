@@ -20,8 +20,6 @@ from modules.utils.ocr_handler import OCRHandler
 import os
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
-MODEL_NAME = 'glm-4-flash'
-API_TOKEN = "7d020833a52b08e7251707288af8d20d.JmuseA1s6dTDSyt7"
 
 
 class DocSummary(BaseModel):
@@ -35,18 +33,20 @@ class Answer(BaseModel):
         description='对于用户提出的问题的回答'
     )
     reason: str = Field(
-        description='作出回答的原文依据。'
+        description='作出回答的原文依据。请把原文中的描述包含在依据中。格式如下：通过原文中：xxxx 中得知'
     )
 
 
 class GeneralRAG:
-    def __init__(self, documents_path_dir=Path(__file__).parent / 'src' / 'inputs'):
+    def __init__(self, llm_params, documents_path_dir=Path(__file__).parent / 'src' / 'inputs'):
+        self.api_token = llm_params.get('api_key')
+        self.model_name = llm_params.get('model_name')
         self.embedding = ZhipuAIEmbeddings(
             model="embedding-3",
-            api_key=API_TOKEN
+            api_key=self.api_token
         )
         self.documents_path_dir = documents_path_dir
-        self.stored_vector_path = Path(__file__).parent / 'src' / 'faiss_index'
+        self.stored_vector_path = documents_path_dir.parent / 'faiss_index'
         self.ocr_instance = OCRHandler()
         self.text_extractor = TextExtraction(ocr_instance=self.ocr_instance)
         if self.stored_vector_path.exists():
@@ -74,11 +74,10 @@ class GeneralRAG:
         logger.success("FAISS store instance initiated.")
         return vector_store
 
-    @staticmethod
-    def create_llm_instance():
+    def create_llm_instance(self):
         return ChatOpenAI(temperature=0.95,
-                          model=MODEL_NAME,
-                          openai_api_key=API_TOKEN,
+                          model=self.model_name,
+                          openai_api_key=self.api_token,
                           openai_api_base="https://open.bigmodel.cn/api/paas/v4/")
 
     def summarize_doc(self, content_lines):
@@ -106,7 +105,7 @@ class GeneralRAG:
         return summary
 
     def load_inputs(self):
-        logger.info("Starts to load input docs.")
+        logger.info(f"Starts to load input docs from {self.documents_path_dir}")
         files = glob(str(self.documents_path_dir / '*.*'))
         for file_path in tqdm.tqdm(files):
             if '_raw_res' in file_path or Path(file_path).name.startswith('~$'):
@@ -151,7 +150,7 @@ class GeneralRAG:
         docs = []
         for idx, content in enumerate(line_contents):
             current_meta = metadata.copy()
-            current_meta['page_idx'] = idx
+            current_meta['segment_idx'] = idx
             doc = Document(page_content=content,
                            metadata=current_meta)
             docs.append(doc)
@@ -202,26 +201,29 @@ YOUR ANSWER(请返回中文结果。注意，请严格依据DocContent提供的�
         logger.debug(prompt)
         res_raw = llm_ins.invoke(prompt)
         res_content = res_raw.content
+        logger.debug(res_content)
         answer_instance = retry_parser.parse(res_content)
         answer = answer_instance.answer
         reason = answer_instance.reason
-        logger.info(answer)
-        logger.info(reason)
-        return res_content
+        return answer, reason
 
     def qa_main(self, question, k=4):
         results = self.query_document(question, k)
-        files = [f"{r.metadata['file_path']}: Page: {r.metadata['page_idx']}" for r in results]
+        files = [f"{Path(r.metadata['file_path']).name}: Segment_index: {r.metadata['segment_idx']}" for r in results]
         contents = list(set(r.page_content for r in results))
         logger.success(f"Will answer according to {files}")
-        res_content = self.answer_question_by_background(question, contents)
-        return res_content, files
+        answer, reason = self.answer_question_by_background(question, contents)
+        return answer, reason, files
 
 
 if __name__ == "__main__":
-    ins = GeneralRAG()
-    res_content, files = ins.qa_main(
-        '体系部的职责是什么')
-    logger.info(res_content)
+    import yaml
+
+    backend_configs_path = Path(__file__).parent.parent / 'configs' / 'backend_configs.yaml'
+    with open(backend_configs_path, 'r', encoding='utf-8') as f:
+        config_data = yaml.load(f, Loader=yaml.FullLoader)
+    LLM_PARAMS = config_data.get('LLM', {}).get("llm_params", {})
+    ins = GeneralRAG(LLM_PARAMS, Path(__file__).parent.parent / 'src' / 'inputs')
+    answer, reason, files = ins.qa_main('体系部的职责是什么')
     logger.info(files)
     print('HERE')
