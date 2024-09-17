@@ -110,6 +110,9 @@ class GeneralRAG:
         for file_path in tqdm.tqdm(files):
             if '_raw_res' in file_path or Path(file_path).name.startswith('~$'):
                 continue
+            if (Path(file_path).parent / str(Path(file_path).name) + '_raw_res.json').exists():
+                logger.success(f'file {file_path} already loaded.')
+                continue
             doc_id = self.store_document(Path(file_path))
             logger.success(f"Loaded {file_path} to DOC_ID: {doc_id}")
 
@@ -170,7 +173,7 @@ class GeneralRAG:
         self.vector_store.save_local(str(self.stored_vector_path))
         return doc_ids
 
-    def query_document(self, query, k=5):
+    def query_document(self, query, k=10):
         results = self.vector_store.similarity_search(
             query,
             k=k,
