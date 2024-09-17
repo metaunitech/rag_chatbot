@@ -30,10 +30,10 @@ class DocSummary(BaseModel):
 
 class Answer(BaseModel):
     answer: str = Field(
-        description='对于用户提出的问题的回答'
+        description='对于用户提出的问题的回答,请返回富文本格式，尤其注意返回链接（如果答案中包含网址链接等）'
     )
     reason: str = Field(
-        description='作出回答的原文依据。请把原文中的描述包含在依据中。格式如下：通过原文中：xxxx 中得知'
+        description='作出回答的原文依据。请把原文中的描述包含在依据中。格式如下：通过原文中：xxxx 中得知。请返回富文本格式'
     )
 
 
