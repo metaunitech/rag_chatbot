@@ -110,7 +110,7 @@ class GeneralRAG:
         for file_path in tqdm.tqdm(files):
             if '_raw_res' in file_path or Path(file_path).name.startswith('~$'):
                 continue
-            if (Path(file_path).parent / str(Path(file_path).name) + '_raw_res.json').exists():
+            if (Path(file_path).parent / g(str(Path(file_path).name) + '_raw_res.json')).exists():
                 logger.success(f'file {file_path} already loaded.')
                 continue
             doc_id = self.store_document(Path(file_path))
